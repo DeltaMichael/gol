@@ -2,6 +2,11 @@ package main
 
 import (
 	"fmt"
+	"time"
+	"github.com/gopxl/pixel"
+	"github.com/gopxl/pixel/imdraw"
+	"github.com/gopxl/pixel/pixelgl"
+	"golang.org/x/image/colornames"
 )
 
 type Cell struct {
@@ -65,6 +70,12 @@ func glider(y, x int) []Cell {
 	return glider
 }
 
+func worker_bee(y, x int) []Cell {
+	bee := make([]Cell, 0, 3)
+	bee = append(bee, Cell {y, x}, Cell {y, x + 1}, Cell {y, x + 2})
+	return bee
+}
+
 func (grid Grid) update() {
 	alive := make([]Cell, 0, 100)
 	dead := make([]Cell, 0, 100)
@@ -90,10 +101,49 @@ func (grid Grid) update() {
 	grid.remove(dead)
 }
 
-func main() {
-	grid := createGrid(20, 20)
+func updateScreen(imd *imdraw.IMDraw, grid Grid) {
+	for i := range grid {
+		for j := range grid[i] {
+			if grid[i][j] == 1 {
+				imd.Color = colornames.Blueviolet
+				imd.Push(pixel.V(float64(j * 10), float64(i * 10)), pixel.V(float64(j * 10 + 10), float64(i * 10 + 10)))
+				imd.Rectangle(0)
+			}
+		}
+	}
+}
+
+func run() {
+	grid := createGrid(80, 60)
 	grid.draw(glider(10, 10))
-	grid.printGrid()
-	grid.update()
-	grid.printGrid()
+	grid.draw(glider(40, 20))
+	grid.draw(worker_bee(30, 30))
+
+	cfg := pixelgl.WindowConfig {
+		Title:  "Pixel Rocks!",
+		Bounds: pixel.R(0, 0, 800, 600),
+		VSync: true,
+	}
+
+	win, err := pixelgl.NewWindow(cfg)
+
+	if err != nil {
+		panic(err)
+	}
+
+	imd := imdraw.New(nil)
+
+	for !win.Closed() {
+		imd.Clear()
+		updateScreen(imd, grid)
+		win.Clear(colornames.Skyblue)
+		imd.Draw(win)
+		win.Update()
+		time.Sleep(300000000)
+		grid.update()
+	}
+}
+
+func main() {
+	pixelgl.Run(run)
 }
