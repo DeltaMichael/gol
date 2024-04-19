@@ -9,7 +9,9 @@ type Cell struct {
 	x int
 }
 
-func printGrid(grid [][]int) {
+type Grid [][]int
+
+func (grid Grid) printGrid() {
 	for i := range grid {
 		for j := range grid[i] {
 			fmt.Printf("%d, ", grid[i][j])
@@ -18,7 +20,7 @@ func printGrid(grid [][]int) {
 	}
 }
 
-func createGrid(y int, x int) [][]int {
+func createGrid(y int, x int) Grid {
 	grid := make([][]int, y)
 	for i := range grid {
 		grid[i] = make([]int, x)
@@ -26,32 +28,32 @@ func createGrid(y int, x int) [][]int {
 	return grid
 }
 
-func getCell(y, x int, grid[][]int) int {
+func (grid Grid) getCell(y, x int) int {
 	if y >= 0 && y < len(grid) && x >= 0 && x < len(grid[0]) {
 		return grid[y][x]
 	}
 	return 0
 }
 
-func isCellValid(y, x int, grid[][]int) bool {
+func (grid Grid) isCellValid(y, x int) bool {
 	return y >= 0 && y < len(grid) && x >= 0 && x < len(grid[0])
 }
 
-func getLiveNeighbors(y int, x int, grid [][]int) int {
-	return getCell(y - 1, x, grid) + getCell(y + 1, x, grid) + getCell(y, x - 1, grid) + getCell(y, x + 1, grid) + getCell(y + 1, x + 1, grid) + getCell(y + 1, x - 1, grid) + getCell(y - 1, x + 1, grid) + getCell(y - 1, x - 1, grid)
+func (grid Grid) getLiveNeighbors(y int, x int) int {
+	return grid.getCell(y - 1, x) + grid.getCell(y + 1, x) + grid.getCell(y, x - 1) + grid.getCell(y, x + 1) + grid.getCell(y + 1, x + 1) + grid.getCell(y + 1, x - 1) + grid.getCell(y - 1, x + 1) + grid.getCell(y - 1, x - 1)
 }
 
-func draw(cells []Cell, grid [][]int) {
+func (grid Grid) draw(cells []Cell) {
 	for _, cell := range cells {
-		if isCellValid(cell.y, cell.x, grid) {
+		if grid.isCellValid(cell.y, cell.x) {
 			grid[cell.y][cell.x] = 1
 		}
 	}
 }
 
-func remove(cells []Cell, grid [][]int) {
+func (grid Grid) remove(cells []Cell) {
 	for _, cell := range cells {
-		if isCellValid(cell.y, cell.x, grid) {
+		if grid.isCellValid(cell.y, cell.x) {
 			grid[cell.y][cell.x] = 0
 		}
 	}
@@ -63,13 +65,12 @@ func glider(y, x int) []Cell {
 	return glider
 }
 
-func update(grid[][]int) {
+func (grid Grid) update() {
 	alive := make([]Cell, 0, 100)
 	dead := make([]Cell, 0, 100)
-
 	for i := range grid {
 		for j := range grid[i] {
-			n := getLiveNeighbors(i, j, grid)
+			n := grid.getLiveNeighbors(i, j)
 			if grid[i][j] == 1 && n < 2 {
 				dead = append(dead, Cell {int(i), int(j)})
 			}
@@ -85,15 +86,14 @@ func update(grid[][]int) {
 		}
 	}
 
-	draw(alive, grid)
-	remove(dead, grid)
+	grid.draw(alive)
+	grid.remove(dead)
 }
 
 func main() {
 	grid := createGrid(20, 20)
-	draw(glider(10, 10), grid)
-	printGrid(grid)
-	update(grid)
-	printGrid(grid)
-
+	grid.draw(glider(10, 10))
+	grid.printGrid()
+	grid.update()
+	grid.printGrid()
 }
